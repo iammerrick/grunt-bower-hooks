@@ -1,16 +1,22 @@
 'use strict';
 module.exports = function (grunt) {
-	var stringifyObject = require('stringify-object');
-	var JSON5 = require('json5');
 	var _ = require('lodash');
+	
+	/** Wire up r.js **/
+	var requirejs = require('requirejs');
+	
+	requirejs.config({
+		baseUrl: require('path').resolve(__dirname,'../rjs'),
+		nodeRequire: require
+	});
+	
+	var transform = requirejs('transform');
+	/** End r.js wiring **/
 
-	grunt.registerTask('bower', 'Wire-up Bower components in RJS config', function () {
-		this.requiresConfig('bower');
+	grunt.registerMultiTask('bower', 'Wire-up Bower components in RJS config', function () {
 		var cb = this.async();
-		var reConfig = /require\.config\((\{[^\)]+)/i;
-		var filePath = grunt.config('bower.rjsConfig');
+		var filePath = this.data.rjsConfig;
 		var file = grunt.file.read(filePath);
-
 		require('bower').commands.list({paths: true})
 			.on('data', function (data) {
 				var rjsConfig;
@@ -21,12 +27,11 @@ module.exports = function (grunt) {
 						obj[key] = grunt.file.isDir(val) ? val : val.replace(/\.js$/, '');
 					});
 
-					rjsConfig = file.replace(reConfig, function (match, p1) {
-						var config =JSON5.parse(p1);
+					rjsConfig = transform.modifyConfig(file, function(config) {
 						_.extend(config.paths, data);
-						return 'require.config(' + stringifyObject(config, {indent: grunt.config('bower.indent') || '    '});
+						return config;
 					});
-
+					
 					grunt.file.write(filePath, rjsConfig);
 					grunt.log.writeln('Updated RequireJS config with installed Bower components'.green);
 					cb();
