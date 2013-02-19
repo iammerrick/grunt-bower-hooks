@@ -2,16 +2,7 @@
 module.exports = function (grunt) {
 	var _ = require('lodash');
 	
-	/** Wire up r.js **/
-	var requirejs = require('requirejs');
-	
-	requirejs.config({
-		baseUrl: require('path').resolve(__dirname,'../rjs'),
-		nodeRequire: require
-	});
-	
-	var transform = requirejs('transform');
-	/** End r.js wiring **/
+	var requirejs = require('requirejs/bin/r.js');
 
 	grunt.registerMultiTask('bower', 'Wire-up Bower components in RJS config', function () {
 		var cb = this.async();
@@ -26,15 +17,18 @@ module.exports = function (grunt) {
 					data = _.forOwn(data, function (val, key, obj) {
 						obj[key] = grunt.file.isDir(val) ? val : val.replace(/\.js$/, '');
 					});
-
-					rjsConfig = transform.modifyConfig(file, function(config) {
-						_.extend(config.paths, data);
-						return config;
-					});
 					
-					grunt.file.write(filePath, rjsConfig);
-					grunt.log.writeln('Updated RequireJS config with installed Bower components'.green);
-					cb();
+					requirejs.tools.useLib(function(require) {
+						rjsConfig = require('transform').modifyConfig(file, function(config) {
+							_.extend(config.paths, data);
+							return config;
+						});
+						
+						grunt.file.write(filePath, rjsConfig);
+						grunt.log.writeln('Updated RequireJS config with installed Bower components'.green);
+						cb();
+					});					
+					
 				}
 			})
 			.on('error', function (err) {

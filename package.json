@@ -34,8 +34,7 @@
   "dependencies": {
     "lodash": "~1.0.0-rc.3",
     "bower": "~0.7.0",
-    "requirejs": "~2.1.4",
-    "amdefine": "0.0.4"
+    "requirejs": "~2.1.4"
   },
   "devDependencies": {
     "matchdep": "~0.1.1",
